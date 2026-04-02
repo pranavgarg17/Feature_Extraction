@@ -1,0 +1,10 @@
+*.pth
+venv/
+.DS_Store
+__pycache__/
+data/
+*.svs
+data/
+*.svs
+features/
+*.h5
