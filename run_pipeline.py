@@ -1,4 +1,5 @@
 import os
+import torch
 from src.patch_extraction import extract_patches
 from src.feature_extraction import CTransPathExtractor
 from src.save_utils import save_h5
@@ -11,9 +12,15 @@ def main():
     raw_dir = "data/raw"
     feature_dir = "data/features"
     label_dir = "data/labels"
+    patch_size = 224
+    stride = 224
+    target_mpp = 0.5
+    max_patches = 5000
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Initialize feature extractor
-    extractor = CTransPathExtractor(device="cpu")
+    print(f"Using device: {device}")
+    extractor = CTransPathExtractor(device=device)
 
     # Loop through all slides
     for file in os.listdir(raw_dir):
@@ -24,12 +31,23 @@ def main():
         slide_path = os.path.join(raw_dir, file)
         slide_name = file.replace(".svs", "")
 
+        save_path = os.path.join(feature_dir, f"{slide_name}.h5")
+        if os.path.exists(save_path):
+            print(f"Skipping {slide_name}, already processed.")
+            continue
+
         print(f"\nProcessing: {slide_name}")
 
         # ---------------------------
         # Step 1: Patch extraction
         # ---------------------------
-        patches, coords = extract_patches(slide_path)
+        patches, coords = extract_patches(
+            slide_path,
+            patch_size=patch_size,
+            stride=stride,
+            target_mpp=target_mpp,
+            max_patches=max_patches,
+        )
 
         print("Patches extracted:", len(patches))
 
@@ -41,7 +59,6 @@ def main():
         # ---------------------------
         # Step 3: Save features
         # ---------------------------
-        save_path = os.path.join(feature_dir, f"{slide_name}.h5")
         save_h5(features, coords, save_path)
 
         print(f"Saved: {save_path}")
